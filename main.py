@@ -3,11 +3,11 @@ from typing import Optional, Dict
 from enum import Enum
 
 # Pydantic
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 # FastAPI
 from fastapi import FastAPI, status
-from fastapi import Body, Query, Path
+from fastapi import Body, Query, Path, Form
 
 app = FastAPI()
 
@@ -123,6 +123,17 @@ class AuthorOut(AuthorBase):
     pass
 
 
+class LoginOut(BaseModel): 
+    username: str = Field(
+        ...,
+        max_length=20,
+        example="lita2021"
+        )
+    message: str = Field(
+        default="Login Succesfully!"
+        )
+
+
 @app.get(
     path="/",
     status_code=status.HTTP_200_OK
@@ -208,3 +219,12 @@ def update_book(
 ):
     results = book.dict()
     return results
+
+
+@app.post(
+    path="/login",
+    response_model=LoginOut,
+    status_code=status.HTTP_200_OK
+)
+def login(username: str = Form(...), password: SecretStr = Form(...)):
+    return LoginOut(username=username)
