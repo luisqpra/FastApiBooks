@@ -31,7 +31,7 @@ class Language(Enum):
     german = "german "
 
 
-class Book(BaseModel):
+class BookBase(BaseModel):
     title: str = Field(
         ...,
         min_length=1,
@@ -64,6 +64,9 @@ class Book(BaseModel):
         max_length=50,
         example="Candlewick"
     )
+
+
+class Book(BookBase):
     isbn_10: str = Field(
         ...,
         min_length=10,
@@ -77,42 +80,11 @@ class Book(BaseModel):
     )
 
 
-class BookOut(BaseModel):
-    title: str = Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        example="A Monster Calls"
-    )
-    author: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        example="Patrick Ness"
-    )
-    reading_age: Optional[ReadingAge] = Field(
-        default=ReadingAge.yearsDefault,
-        example=ReadingAge.years18
-    )
-    pages: Optional[int] = Field(
-        default=None,
-        ge=1,
-        le=10000,
-        example=128
-    )
-    language: Optional[Language] = Field(
-        default=Language.default,
-        example=Language.english
-    )
-    publisher: Optional[str] = Field(
-        default=None,
-        min_length=1,
-        max_length=50,
-        example="Candlewick"
-    )
+class BookOut(BookBase):
+    pass
 
 
-class Author(BaseModel):
+class AuthorBase(BaseModel):
     author: str = Field(
         ...,
         min_length=1,
@@ -137,6 +109,9 @@ class Author(BaseModel):
         max_length=120,
         example='Young adult'
     )
+
+
+class Author(AuthorBase):
     id_hide: str = Field(
         ...,
         min_length=8,
@@ -144,25 +119,8 @@ class Author(BaseModel):
     )
 
 
-class AuthorOut(BaseModel):
-    author: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        example="Patrick Ness"
-    )
-    birthdate: Optional[str] = Field(
-        default=None,
-        example="27/08/1991",
-        min_length=10,
-        max_length=10
-    )
-    nationality: Optional[str] = Field(
-        default=None,
-        min_length=1,
-        max_length=120,
-        example='American-British'
-    )
+class AuthorOut(AuthorBase):
+    pass
 
 
 @app.get("/")
