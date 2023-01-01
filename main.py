@@ -70,6 +70,46 @@ class Book(BaseModel):
         max_length=12,
         example="0763692158"
     )
+    id_hide: str = Field(
+        ...,
+        min_length=8,
+        example='3N1gM4H1D3'
+    )
+
+
+class BookOut(BaseModel):
+    title: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        example="A Monster Calls"
+    )
+    author: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        example="Patrick Ness"
+    )
+    reading_age: Optional[ReadingAge] = Field(
+        default=ReadingAge.yearsDefault,
+        example=ReadingAge.years18
+    )
+    pages: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=10000,
+        example=128
+    )
+    language: Optional[Language] = Field(
+        default=Language.default,
+        example=Language.english
+    )
+    publisher: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=50,
+        example="Candlewick"
+    )
 
 
 class Author(BaseModel):
@@ -97,6 +137,32 @@ class Author(BaseModel):
         max_length=120,
         example='Young adult'
     )
+    id_hide: str = Field(
+        ...,
+        min_length=8,
+        example='Hid3N1T3M5'
+    )
+
+
+class AuthorOut(BaseModel):
+    author: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        example="Patrick Ness"
+    )
+    birthdate: Optional[str] = Field(
+        default=None,
+        example="27/08/1991",
+        min_length=10,
+        max_length=10
+    )
+    nationality: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=120,
+        example='American-British'
+    )
 
 
 @app.get("/")
@@ -105,9 +171,14 @@ def home() -> Dict:
 
 
 # Request and Response Body
-@app.post("/book/new")
+@app.post("/book/new", response_model=BookOut)
 def create_book(book: Book = Body(...)):
     return book
+
+
+@app.post("/author/new", response_model=AuthorOut)
+def create_author(author: Author = Body(...)):
+    return author
 
 
 # Validaciones: Query Parameters
