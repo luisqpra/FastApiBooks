@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 # FastAPI
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi import Body, Query, Path
 
 app = FastAPI()
@@ -123,24 +123,38 @@ class AuthorOut(AuthorBase):
     pass
 
 
-@app.get("/")
+@app.get(
+    path="/",
+    status_code=status.HTTP_200_OK
+    )
 def home() -> Dict:
     return {"Hello": "World"}
 
 
 # Request and Response Body
-@app.post("/book/new", response_model=BookOut)
+@app.post(
+    path="/book/new",
+    response_model=BookOut,
+    status_code=status.HTTP_201_CREATED
+    )
 def create_book(book: Book = Body(...)):
     return book
 
 
-@app.post("/author/new", response_model=AuthorOut)
+@app.post(
+    path="/author/new",
+    response_model=AuthorOut,
+    status_code=status.HTTP_201_CREATED
+    )
 def create_author(author: Author = Body(...)):
     return author
 
 
 # Validaciones: Query Parameters
-@app.get("/book/details")
+@app.get(
+    path="/book/details",
+    status_code=status.HTTP_200_OK
+    )
 def show_book(
     title: Optional[str] = Query(
         None,
@@ -164,7 +178,10 @@ def show_book(
 
 # Validaciones: Path Parameters
 
-@app.get("/book/{book_id}")
+@app.get(
+    path="/book/{book_id}",
+    status_code=status.HTTP_200_OK
+    )
 def show_book_path(
     book_id: int = Path(
         ...,
@@ -175,7 +192,10 @@ def show_book_path(
     return {book_id: "It exists!"}
 
 
-@app.put("/book/{book_id}")
+@app.put(
+    path="/book/{book_id}",
+    status_code=status.HTTP_200_OK
+    )
 def update_book(
     book_id: int = Path(
         ...,
