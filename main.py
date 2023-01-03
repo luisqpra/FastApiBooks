@@ -1,15 +1,18 @@
 # Python
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from enum import Enum
 
 # Pydantic
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel
+from pydantic import SecretStr
 from pydantic import EmailStr
+from pydantic import Field
 
 # FastAPI
 from fastapi import FastAPI, status
 from fastapi import Body, Query, Path
 from fastapi import Form, Header, Cookie
+from fastapi import UploadFile, File
 
 app = FastAPI()
 
@@ -281,3 +284,33 @@ def contact(
     }
     return result
     # return user_agent
+
+
+# Files
+
+@app.post(
+    path="/post-image"
+)
+def post_image(
+    image: UploadFile = File(...)
+):
+    return {
+        "Filename": image.filename,
+        "Format": image.content_type,
+        "Size(kb)": round(len(image.file.read())/1024, ndigits=2)
+    }
+
+
+@app.post(
+    path='/post-multimages'
+)
+def post_multimages(
+    images: List[UploadFile] = File(...)
+):
+    info_images = [{
+        "filename": image.filename,
+        "Format": image.content_type,
+        "Size(kb)": round(len(image.file.read())/1024, ndigits=2)
+    } for image in images]
+
+    return info_images
