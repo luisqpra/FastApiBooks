@@ -144,7 +144,9 @@ class LoginOut(BaseModel):
 # root
 @app.get(
     path="/",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["Root"]
+
     )
 def home() -> Dict:
     return {"Hello": "World"}
@@ -154,7 +156,8 @@ def home() -> Dict:
 @app.post(
     path="/book/new",
     response_model=BookOut,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    tags=["Book"]
     )
 def create_book(book: Book = Body(...)):
     return book
@@ -163,7 +166,8 @@ def create_book(book: Book = Body(...)):
 @app.post(
     path="/author/new",
     response_model=AuthorOut,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    tags=["Author"]
     )
 def create_author(author: Author = Body(...)):
     return author
@@ -172,7 +176,8 @@ def create_author(author: Author = Body(...)):
 # Validations: Query Parameters
 @app.get(
     path="/book/details",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["Book"]
     )
 def show_book(
     title: Optional[str] = Query(
@@ -201,7 +206,8 @@ books_id = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # books ID
 
 @app.get(
     path="/book/{book_id}",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["Book"]
     )
 def show_book_path(
     book_id: int = Path(
@@ -220,7 +226,8 @@ def show_book_path(
 
 @app.put(
     path="/book/{book_id}",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["Book"]
     )
 def update_book(
     book_id: int = Path(
@@ -240,7 +247,8 @@ def update_book(
 @app.post(
     path="/login",
     response_model=LoginOut,
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["User"]
 )
 def login(
     username: str = Form(
@@ -257,7 +265,8 @@ def login(
 # Cookies and headers parameters
 @app.post(
     path="/contact",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["User"]
 )
 def contact(
     first_name: str = Form(
@@ -298,7 +307,8 @@ def contact(
 # Files
 
 @app.post(
-    path="/post-image"
+    path="/post-image",
+    tags=["File"]
 )
 def post_image(
     image: UploadFile = File(...)
@@ -311,7 +321,8 @@ def post_image(
 
 
 @app.post(
-    path='/post-multimages'
+    path='/post-multimages',
+    tags=["File"]
 )
 def post_multimages(
     images: List[UploadFile] = File(...)
