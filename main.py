@@ -10,9 +10,11 @@ from pydantic import Field
 
 # FastAPI
 from fastapi import FastAPI, status
-from fastapi import Body, Query, Path
-from fastapi import Form, Header, Cookie
+from fastapi import (
+    Body, Query, Path, Form, Header, Cookie
+    )
 from fastapi import UploadFile, File
+from fastapi import HTTPException
 
 app = FastAPI()
 
@@ -194,6 +196,8 @@ def show_book(
 
 
 # Validations: Path Parameters
+books_id = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # books ID
+
 
 @app.get(
     path="/book/{book_id}",
@@ -206,6 +210,11 @@ def show_book_path(
         example=112233
         )
 ):
+    if book_id not in books_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="¡This book is not in our library"
+            )
     return {book_id: "It exists!"}
 
 
