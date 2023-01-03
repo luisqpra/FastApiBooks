@@ -4,15 +4,17 @@ from enum import Enum
 
 # Pydantic
 from pydantic import BaseModel, Field, SecretStr
+from pydantic import EmailStr
 
 # FastAPI
 from fastapi import FastAPI, status
-from fastapi import Body, Query, Path, Form
+from fastapi import Body, Query, Path
+from fastapi import Form, Header, Cookie
 
 app = FastAPI()
 
 
-# Model
+# Modes
 class ReadingAge(Enum):
     yearsDefault = "No defined"
     years1_3 = "1 - 3 years"
@@ -123,7 +125,7 @@ class AuthorOut(AuthorBase):
     pass
 
 
-class LoginOut(BaseModel): 
+class LoginOut(BaseModel):
     username: str = Field(
         ...,
         max_length=20,
@@ -134,6 +136,7 @@ class LoginOut(BaseModel):
         )
 
 
+# root
 @app.get(
     path="/",
     status_code=status.HTTP_200_OK
@@ -161,7 +164,7 @@ def create_author(author: Author = Body(...)):
     return author
 
 
-# Validaciones: Query Parameters
+# Validations: Query Parameters
 @app.get(
     path="/book/details",
     status_code=status.HTTP_200_OK
@@ -187,7 +190,7 @@ def show_book(
     return {title: author}
 
 
-# Validaciones: Path Parameters
+# Validations: Path Parameters
 
 @app.get(
     path="/book/{book_id}",
@@ -221,10 +224,60 @@ def update_book(
     return results
 
 
+# Login -forms
 @app.post(
     path="/login",
     response_model=LoginOut,
     status_code=status.HTTP_200_OK
 )
-def login(username: str = Form(...), password: SecretStr = Form(...)):
+def login(
+    username: str = Form(
+        ...,
+        example="luisquiroz"
+        ),
+    password: SecretStr = Form(
+        ...,
+        example="HolaMundo"
+        )):
     return LoginOut(username=username)
+
+
+# Cookies and headers parameters
+@app.post(
+    path="/contact",
+    status_code=status.HTTP_200_OK
+)
+def contact(
+    first_name: str = Form(
+        ...,
+        max_length=20,
+        min_length=1,
+        example="Luis"
+    ),
+    last_name: str = Form(
+        ...,
+        max_length=20,
+        min_length=1,
+        example="Quiroz Prada"
+    ),
+    email: EmailStr = Form(
+        ...,
+        example="luis@yahoo.com"
+        ),
+    message: str = Form(
+        ...,
+        min_length=20,
+        example="Heyyy you, how are you?, what's going on"
+    ),
+    user_agent: Optional[str] = Header(default=None),
+    ads: Optional[str] = Cookie(
+        default=None,
+        example="this is the info that is tracking"
+        )
+):
+    result = {
+        "header": user_agent,
+        "cookie": ads
+    }
+    return result
+    # return user_agent
