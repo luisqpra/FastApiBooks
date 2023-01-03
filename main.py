@@ -146,7 +146,6 @@ class LoginOut(BaseModel):
     path="/",
     status_code=status.HTTP_200_OK,
     tags=["Root"]
-
     )
 def home() -> Dict:
     return {"Hello": "World"}
@@ -157,9 +156,19 @@ def home() -> Dict:
     path="/book/new",
     response_model=BookOut,
     status_code=status.HTTP_201_CREATED,
-    tags=["Book"]
+    tags=["Book"],
+    summary="Create a new book and return it"
     )
 def create_book(book: Book = Body(...)):
+    """
+    "Create a new book"
+
+    - Args:
+      book (Book): Book = Body(...)
+
+    - Returns:
+      The book object that was passed in.
+    """
     return book
 
 
@@ -167,9 +176,19 @@ def create_book(book: Book = Body(...)):
     path="/author/new",
     response_model=AuthorOut,
     status_code=status.HTTP_201_CREATED,
-    tags=["Author"]
+    tags=["Author"],
+    summary="Create a new author"
     )
 def create_author(author: Author = Body(...)):
+    """
+    "Create a new author"
+
+    - Args:
+      author (Author): Author = Body(...)
+
+    - Returns:
+      The author object
+    """
     return author
 
 
@@ -177,7 +196,8 @@ def create_author(author: Author = Body(...)):
 @app.get(
     path="/book/details",
     status_code=status.HTTP_200_OK,
-    tags=["Book"]
+    tags=["Book"],
+    summary="Show details about a book"
     )
 def show_book(
     title: Optional[str] = Query(
@@ -197,6 +217,17 @@ def show_book(
         example="Patrick Ness"
         )
 ):
+    """
+    It returns a dictionary with the title as the key
+    and the author as the value
+
+    - Args:
+      title (Optional[str]): Optional[str] = Query(
+      author (Optional[str]): Optional[str] = Query(
+
+    - Returns:
+      A dictionary with the title and author as keys and values.
+    """
     return {title: author}
 
 
@@ -207,7 +238,8 @@ books_id = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # books ID
 @app.get(
     path="/book/{book_id}",
     status_code=status.HTTP_200_OK,
-    tags=["Book"]
+    tags=["Book"],
+    summary="Checking if a book was created"
     )
 def show_book_path(
     book_id: int = Path(
@@ -216,6 +248,20 @@ def show_book_path(
         example=112233
         )
 ):
+    """
+    "Check a book in library"
+    It returns a dictionary with the book_id as the
+    key and a string as the value. The book_id is an
+    integer that is greater than 0 and the example value is 112233.
+    If the book_id is not in the books_id list, then it raises
+    an HTTPException with a status code of 404 and a detail message.
+
+    - Args:
+      book_id (int): int = Path(
+
+    - Returns:
+      A dictionary with the book_id as the key and a string as the value.
+    """
     if book_id not in books_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -227,7 +273,8 @@ def show_book_path(
 @app.put(
     path="/book/{book_id}",
     status_code=status.HTTP_200_OK,
-    tags=["Book"]
+    tags=["Book"],
+    summary="Updates a book"
     )
 def update_book(
     book_id: int = Path(
@@ -239,6 +286,16 @@ def update_book(
     ),
     book: Book = Body(...)
 ):
+    """
+    "Updates a book and returns it"
+
+    - Args:
+        book_id (int): The ID of the book to be updated.
+        book (Book): A `Book` object with the updated information.
+
+    - Returns:
+        dict: A dictionary with the updated book information.
+    """
     results = book.dict()
     return results
 
@@ -248,7 +305,8 @@ def update_book(
     path="/login",
     response_model=LoginOut,
     status_code=status.HTTP_200_OK,
-    tags=["User"]
+    tags=["User"],
+    summary="Loging a user"
 )
 def login(
     username: str = Form(
@@ -259,6 +317,18 @@ def login(
         ...,
         example="HolaMundo"
         )):
+    """
+    "Logs in a user and returns a success message"
+
+    - Args:
+        username (str): The username of the user.
+        password (SecretStr): The password of the user.
+
+    - Returns:
+        LoginOut: A `LoginOut` object with the following attributes:
+            username (str): The username of the user.
+            message (str): A message indicating that the login was successful.
+    """
     return LoginOut(username=username)
 
 
@@ -266,7 +336,8 @@ def login(
 @app.post(
     path="/contact",
     status_code=status.HTTP_200_OK,
-    tags=["User"]
+    tags=["User"],
+    summary="Form about a contact"
 )
 def contact(
     first_name: str = Form(
@@ -296,6 +367,22 @@ def contact(
         example="this is the info that is tracking"
         )
 ):
+    """
+    "Receive and returns information about a form"
+
+    - Args:
+        first_name (str): The first name of the user.
+        last_name (str): The last name of the user.
+        email (EmailStr): The email of the user.
+        message (str): The message to be sent.
+        user_agent (Optional[str]): The user agent of the request.
+        ads (Optional[str]): The ads tracking information of the request.
+
+    - Returns:
+        dict: A dictionary with the following keys:
+            "header" (str): The user agent of the request.
+            "cookie" (str): The ads tracking information of the request.
+    """
     result = {
         "header": user_agent,
         "cookie": ads
@@ -308,11 +395,24 @@ def contact(
 
 @app.post(
     path="/post-image",
-    tags=["File"]
+    tags=["File"],
+    summary="Loads a image"
 )
 def post_image(
     image: UploadFile = File(...)
 ):
+    """
+    "Uploads an image and returns information about it"
+
+    - Args:
+        image (UploadFile): The image file to be uploaded.
+
+    - Returns:
+        dict: A dictionary with the following keys:
+            "Filename" (str): The name of the image file.
+            "Format" (str): The content type of the image file.
+            "Size(kb)" (float): The size of the image file in kilobytes.
+    """
     return {
         "Filename": image.filename,
         "Format": image.content_type,
@@ -322,11 +422,25 @@ def post_image(
 
 @app.post(
     path='/post-multimages',
-    tags=["File"]
+    tags=["File"],
+    summary="Load several files"
 )
 def post_multimages(
     images: List[UploadFile] = File(...)
 ):
+    """
+    "Uploads several images and returns information about them"
+
+    It takes a list of images, and returns a list of
+    dictionaries containing the filename, format, and
+    size of each image
+
+    - Args:
+      images (List[UploadFile]): List[UploadFile] = File(...)
+
+    - Returns:
+      A list of dictionaries.
+    """
     info_images = [{
         "filename": image.filename,
         "Format": image.content_type,
