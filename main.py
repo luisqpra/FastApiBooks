@@ -396,7 +396,8 @@ def contact(
 @app.post(
     path="/post-image",
     tags=["File"],
-    summary="Loads a image"
+    summary="Loads a image",
+    deprecated=True
 )
 def post_image(
     image: UploadFile = File(...)
