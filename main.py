@@ -1,12 +1,16 @@
 # Python
 from typing import Optional, Dict, List
 from enum import Enum
+from uuid import UUID
+from datetime import date, datetime
+
 
 # Pydantic
 from pydantic import BaseModel
 from pydantic import SecretStr
 from pydantic import EmailStr
 from pydantic import Field
+
 
 # FastAPI
 from fastapi import FastAPI, status
@@ -39,6 +43,9 @@ class Language(Enum):
 
 
 class BookBase(BaseModel):
+    '''
+    Class base of books
+    '''
     title: str = Field(
         ...,
         min_length=1,
@@ -71,6 +78,8 @@ class BookBase(BaseModel):
         max_length=50,
         example="Candlewick"
     )
+    date_add: datetime = Field(default=datetime.now())
+    date_update: Optional[datetime] = Field(default=None)
 
 
 class Book(BookBase):
@@ -80,29 +89,26 @@ class Book(BookBase):
         max_length=12,
         example="0763692158"
     )
-    id_hide: str = Field(
-        ...,
-        min_length=8,
-        example='3N1gM4H1D3'
-    )
+    id_book: UUID = Field(...)
 
 
 class BookOut(BookBase):
+    '''
+    Books as response
+    '''
     pass
 
 
 class AuthorBase(BaseModel):
-    author: str = Field(
+    full_name: str = Field(
         ...,
         min_length=1,
         max_length=50,
         example="Patrick Ness"
     )
-    birthdate: Optional[str] = Field(
+    birthdate: Optional[date] = Field(
         default=None,
-        example="27/08/1991",
-        min_length=10,
-        max_length=10
+        example='1998-06-23'
     )
     nationality: Optional[str] = Field(
         default=None,
@@ -119,11 +125,7 @@ class AuthorBase(BaseModel):
 
 
 class Author(AuthorBase):
-    id_hide: str = Field(
-        ...,
-        min_length=8,
-        example='Hid3N1T3M5'
-    )
+    id_author: UUID = Field(...)
 
 
 class AuthorOut(AuthorBase):
@@ -236,53 +238,61 @@ books_id = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # books ID
 
 
 @app.get(
-    path="/book/{book_id}",
+    path="/book/{code_book}",
     status_code=status.HTTP_200_OK,
     tags=["Book"],
     summary="Checking if a book was created"
     )
 def show_book_path(
-    book_id: int = Path(
+    code_book: int = Path(
         ...,
+        title="Code book",
         gt=0,
-        example=112233
+        example=7
         )
 ):
     """
     "Check a book in library"
-    It returns a dictionary with the book_id as the
-    key and a string as the value. The book_id is an
+    It returns a dictionary with the code_book as the
+    key and a string as the value. The code_book is an
     integer that is greater than 0 and the example value is 112233.
-    If the book_id is not in the books_id list, then it raises
+    If the code_book is not in the code_book list, then it raises
     an HTTPException with a status code of 404 and a detail message.
 
     - Args:
-      book_id (int): int = Path(
+      code_book (int): int = Path(
 
     - Returns:
-      A dictionary with the book_id as the key and a string as the value.
+      A dictionary with the code_book as the key and a string as the value.
     """
-    if book_id not in books_id:
+    if code_book not in books_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="¡This book is not in our library"
             )
-    return {book_id: "It exists!"}
+    return {code_book: "It exists!"}
 
 
 @app.put(
-    path="/book/{book_id}",
+    path="/book/update_book/{code_book}/{isbn_10}",
     status_code=status.HTTP_200_OK,
     tags=["Book"],
     summary="Updates a book"
     )
 def update_book(
-    book_id: int = Path(
+    code_book: int = Path(
         ...,
-        title="book ID",
-        description="This is the book ID",
+        title="Code book",
         gt=0,
-        example=224455
+        example=7
+    ),
+    isbn_10: str = Path(
+        ...,
+        title="book ID (ISBN-10)",
+        description="Code ISBN-10",
+        min_length=10,
+        max_length=12,
+        example="0111112229"
     ),
     book: Book = Body(...)
 ):
@@ -290,13 +300,14 @@ def update_book(
     "Updates a book and returns it"
 
     - Args:
-        book_id (int): The ID of the book to be updated.
+        code_book (int): The ID of the book to be updated.
         book (Book): A `Book` object with the updated information.
 
     - Returns:
         dict: A dictionary with the updated book information.
     """
     results = book.dict()
+    results.update({'isbn_10': isbn_10})
     return results
 
 
@@ -315,6 +326,8 @@ def login(
         ),
     password: SecretStr = Form(
         ...,
+        min_length=8,
+        max_length=64,
         example="HolaMundo"
         )):
     """
