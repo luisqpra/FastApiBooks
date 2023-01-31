@@ -1,5 +1,6 @@
 import sqlite3 as sql
 from sqlite3 import Error
+# https://www.sqlitetutorial.net/ -- Tutorial SQLite3
 
 
 def connectionDB() -> sql.Connection:
