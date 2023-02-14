@@ -102,11 +102,8 @@ if __name__ == "__main__":
     conn = connectionDB()
     cur = conn.cursor()
     colums = 'id_user,firts_name,last_name,email,birth_date'
-    cur.execute(f"SELECT {colums} FROM User")
-    rows = cur.fetchall()
+    cur.execute(f"SELECT {colums} FROM User WHERE id_user=?", (1,))
+    rows = cur.fetchall()[0]
     list_keys = colums.split(',')
-    result = list(
-        map(
-            lambda x: {list_keys[i]: x[i] for i in range(len(x))}, rows)
-        )
-    print(result)
+    results = {list_keys[i]: rows[i] for i in range(len(rows))}
+    print(results)

@@ -15,7 +15,7 @@ from pydantic import Field
 
 # FastAPI
 from fastapi import FastAPI, status
-from fastapi import Body
+from fastapi import Body, Query
 # Body, Path
 from fastapi import HTTPException
 
@@ -137,10 +137,13 @@ def create_user(user: User = Body(...)):
 @app.get(
     path="/users",
     status_code=status.HTTP_200_OK,
-    summary="Show all users",
+    summary="Shows all users",
     tags=["User"]
 )
 def show_all_users():
+    """
+    Shows all users
+    """
     conn = connectionDB()
     cur = conn.cursor()
     colums = 'id_user,firts_name,last_name,email,birth_date'
@@ -156,3 +159,32 @@ def show_all_users():
 
 
 # Read a user
+@app.get(
+    path="/user/details",
+    status_code=status.HTTP_200_OK,
+    tags=["User"],
+    summary="Show details about a user"
+    )
+def show_user(
+    id_user: int = Query(
+        ...,
+        gt=0,
+        title="User id",
+        description="User id unique"
+        )
+):
+    conn = connectionDB()
+    cur = conn.cursor()
+    colums = 'id_user,firts_name,last_name,email,birth_date'
+    cur.execute(f"SELECT {colums} FROM User WHERE id_user=?", (id_user,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The user does not exists!"
+            )
+    conn.close()
+    list_keys = colums.split(',')
+    row = rows[0]
+    results = {list_keys[i]: row[i] for i in range(len(row))}
+    return results
