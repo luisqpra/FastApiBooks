@@ -29,7 +29,7 @@ def main():
         id_user integer NOT NULL,
         firts_name text,
         last_name text,
-        email text,
+        email text NOT NULL,
         password text NOT NULL,
         birth_date text,
         PRIMARY KEY(id_user),
@@ -98,4 +98,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    conn = connectionDB()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM User WHERE email=?", ('k@default.com',))
+
+    rows = cur.fetchall()
+
+    print(len(rows))

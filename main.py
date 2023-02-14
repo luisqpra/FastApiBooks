@@ -1,9 +1,10 @@
 # Python
 from typing import Optional, Dict, List
 from enum import Enum
-from uuid import UUID
-from datetime import date, datetime
+from datetime import date
 
+# Base data
+from database.funtionsDB import connectionDB
 
 # Pydantic
 from pydantic import BaseModel
@@ -14,10 +15,13 @@ from pydantic import Field
 
 # FastAPI
 from fastapi import FastAPI, status
-from fastapi import Body, Path
+from fastapi import Body
+# Body, Path
 from fastapi import HTTPException
 
 app = FastAPI()
+app.title = "Library"
+app.version = " 0.0.1"
 
 
 # Modes
@@ -39,111 +43,28 @@ class Language(Enum):
     german = "german "
 
 
-class BookBase(BaseModel):
-    '''
-    Class base of books
-    '''
-    title: str = Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        example="A Monster Calls"
-    )
-    author: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        example="Patrick Ness"
-    )
-    reading_age: Optional[ReadingAge] = Field(
-        default=ReadingAge.yearsDefault,
-        example=ReadingAge.years18
-    )
-    pages: Optional[int] = Field(
-        default=None,
-        ge=1,
-        le=10000,
-        example=128
-    )
-    language: Optional[Language] = Field(
-        default=Language.default,
-        example=Language.english
-    )
-    publisher: Optional[str] = Field(
+# Modes User
+class UserBase(BaseModel):
+    firts_name: str = Field(
         default=None,
         min_length=1,
-        max_length=50,
-        example="Candlewick"
+        max_length=50
     )
-    date_add: datetime = Field(default=datetime.now())
-    date_update: Optional[datetime] = Field(default=None)
-
-
-class Book(BookBase):
-    isbn_10: str = Field(
-        ...,
-        min_length=10,
-        max_length=12,
-        example="0763692158"
-    )
-    id_book: UUID = Field(...)
-
-
-class BookOut(BookBase):
-    '''
-    Books as response
-    '''
-    pass
-
-
-class AuthorBase(BaseModel):
-    full_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        example="Patrick Ness"
-    )
-    birthdate: Optional[date] = Field(
-        default=None,
-        example='1998-06-23'
-    )
-    nationality: Optional[str] = Field(
+    last_name: str = Field(
         default=None,
         min_length=1,
-        max_length=120,
-        example='American-British'
+        max_length=50
     )
-    genre: Optional[str] = Field(
-        default=None,
-        min_length=1,
-        max_length=120,
-        example='Young adult'
-    )
-
-
-class Author(AuthorBase):
-    id_author: UUID = Field(...)
-
-
-class AuthorOut(AuthorBase):
-    pass
-
-
-class LoginBase(BaseModel):
-    username: str = Field(
-        ...,
-        max_length=20,
-        example="lita2021"
-        )
     email: EmailStr = Field(
         ...
         )
-    message: str = Field(
-       default="Login Succesfully!"
-        )
+    birth_date: Optional[date] = Field(
+        default=None,
+        example='1986-04-12'
+    )
 
 
-class Login(LoginBase):
+class User(UserBase):
     password: SecretStr = Field(
         ...,
         min_length=8,
@@ -151,236 +72,62 @@ class Login(LoginBase):
     )
 
 
-class LoginOut(LoginBase):
+class UserOut(UserBase):
     pass
 
 
-# root
+# Home
 @app.get(
     path="/",
     status_code=status.HTTP_200_OK,
-    tags=["Root"]
+    tags=["Home"]
     )
 def home() -> Dict:
     return {"Hello": "World"}
 
 
-# Books
-# Create a book
+# Create a User
 @app.post(
-    path="/book/new",
-    response_model=BookOut,
+    path="/User/new",
     status_code=status.HTTP_201_CREATED,
-    tags=["Book"],
-    summary="Create a new book and return it"
+    tags=["User"],
+    summary="Create a new user and return it"
     )
-def create_book(book: Book = Body(...)):
+def create_user(user: User = Body(...)):
     """
-    "Create a new book"
-
+    It creates a user
     - Args:
-      book (Book): Book = Body(...)
-
+      user (User): User = Body(...)
     - Returns:
-      The book object that was passed in.
+      The user object with the id_user field added.
     """
-    return book
-
-
-books_id = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # books ID
-
-
-# Show a book
-@app.get(
-    path="/book/{id_book}",
-    status_code=status.HTTP_200_OK,
-    response_model=BookOut,
-    tags=["Book"],
-    summary="Show a book"
-    )
-def show_book_path(
-    id_book: int = Path(
-        ...,
-        title="Code book",
-        gt=0,
-        example=7
+    conn = connectionDB()
+    sql = ''' INSERT INTO User(firts_name, last_name, email, birth_date, password)
+              VALUES(?,?,?,?,?) '''
+    if user.birth_date is not None:
+        birth_date = user.birth_date.strftime("%Y-%m-%d")
+    else:
+        birth_date = None
+    data = (
+        user.firts_name,
+        user.last_name,
+        user.email,
+        birth_date,
+        user.password.get_secret_value()
         )
-):
-    """
-    "Check a book in library"
-    It returns a dictionary with the id_book as the
-    key and a string as the value. The id_book is an
-    integer that is greater than 0 and the example value is 112233.
-    If the id_book is not in the id_book list, then it raises
-    an HTTPException with a status code of 404 and a detail message.
-
-    - Args:
-      id_book (int): int = Path(
-
-    - Returns:
-      A dictionary with the id_book as the key and a string as the value.
-    """
-    if id_book not in books_id:
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM User WHERE email=?", (user.email,))
+    rows = cur.fetchall()
+    if len(rows) > 0:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="¡This book is not in our library"
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡This email already exists!"
             )
-    return {id_book: "It exists!"}
-
-
-# Show all books
-@app.get(
-    path="/books",
-    response_model=List[BookOut],
-    status_code=status.HTTP_200_OK,
-    summary="Show all books",
-    tags=["Book"]
-)
-def show_all_books():
-    pass
-
-
-# Delete a book
-@app.delete(
-    path="/book/{id_book}/delete",
-    response_model=BookOut,
-    status_code=status.HTTP_200_OK,
-    summary="Delete a book",
-    tags=["Book"]
-)
-def delete_a_book():
-    pass
-
-
-# Update a book
-@app.put(
-    path="/book/update_book/{id_book}/{isbn_10}",
-    status_code=status.HTTP_200_OK,
-    tags=["Book"],
-    summary="Updates a book"
-    )
-def update_book(
-    id_book: int = Path(
-        ...,
-        title="Code book",
-        gt=0,
-        example=7
-    ),
-    isbn_10: str = Path(
-        ...,
-        title="book ID (ISBN-10)",
-        description="Code ISBN-10",
-        min_length=10,
-        max_length=12,
-        example="0111112229"
-    ),
-    book: Book = Body(...)
-):
-    """
-    "Updates a book and returns it"
-
-    - Args:
-        code_book (int): The ID of the book to be updated.
-        book (Book): A `Book` object with the updated information.
-
-    - Returns:
-        dict: A dictionary with the updated book information.
-    """
-    results = book.dict()
-    results.update({'isbn_10': isbn_10})
-    return results
-
-
-# Author
-# Create an author
-@app.post(
-    path="/author/new",
-    response_model=AuthorOut,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Author"],
-    summary="Create a new author"
-    )
-def create_author(author: Author = Body(...)):
-    """
-    "Create a new author"
-
-    - Args:
-      author (Author): Author = Body(...)
-
-    - Returns:
-      The author object
-    """
-    return author
-
-
-# Show an author
-@app.get(
-    path="/author/{id_author}",
-    response_model=AuthorOut,
-    status_code=status.HTTP_200_OK,
-    summary="Show an author",
-    tags=["Author"]
-)
-def show_an_author():
-    pass
-
-
-# Show all authors
-@app.get(
-    path="/authors",
-    response_model=List[AuthorOut],
-    status_code=status.HTTP_200_OK,
-    summary="Show all authors",
-    tags=["Author"]
-)
-def show_all_authors():
-    pass
-
-
-# Delete an author
-@app.delete(
-    path="/author/{id_author}/delete",
-    response_model=AuthorOut,
-    status_code=status.HTTP_200_OK,
-    summary="Delete an author",
-    tags=["Author"]
-)
-def delete_an_author():
-    pass
-
-
-# Update an author
-@app.put(
-    path="/author/{id_author}/update",
-    response_model=AuthorOut,
-    status_code=status.HTTP_200_OK,
-    summary="Update an author",
-    tags=["Author"]
-)
-def update_an_author():
-    pass
-
-
-# Login
-# Register a user
-@app.post(
-    path="/signup",
-    response_model=LoginOut,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a User",
-    tags=["Login"]
-)
-def signup():
-    pass
-
-
-# Login a user
-@app.post(
-    path="/login",
-    response_model=LoginOut,
-    status_code=status.HTTP_200_OK,
-    summary="Login a User",
-    tags=["Login"]
-)
-def login():
-    pass
+    cur.execute(sql, data)
+    id_user = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return {
+        'id_user': id_user,
+        'user': user
+        }
