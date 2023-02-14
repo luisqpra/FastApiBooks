@@ -60,7 +60,7 @@ class UserBase(BaseModel):
         )
     birth_date: Optional[date] = Field(
         default=None,
-        example='1986-04-12'
+        example='1986-04-22'
     )
 
 
@@ -116,6 +116,7 @@ def create_user(user: User = Body(...)):
         user.password.get_secret_value()
         )
     cur = conn.cursor()
+    # detect if email exists in DB
     cur.execute("SELECT * FROM User WHERE email=?", (user.email,))
     rows = cur.fetchall()
     if len(rows) > 0:
@@ -127,7 +128,31 @@ def create_user(user: User = Body(...)):
     id_user = cur.lastrowid
     conn.commit()
     conn.close()
-    return {
-        'id_user': id_user,
-        'user': user
-        }
+    results = user.dict()
+    results.update({'id_user': id_user})
+    return results
+
+
+# Read Users
+@app.get(
+    path="/users",
+    status_code=status.HTTP_200_OK,
+    summary="Show all users",
+    tags=["User"]
+)
+def show_all_users():
+    conn = connectionDB()
+    cur = conn.cursor()
+    colums = 'id_user,firts_name,last_name,email,birth_date'
+    cur.execute(f"SELECT {colums} FROM User")
+    rows = cur.fetchall()
+    conn.close()
+    list_keys = colums.split(',')
+    results = list(
+        map(
+            lambda x: {list_keys[i]: x[i] for i in range(len(x))}, rows)
+        )
+    return results
+
+
+# Read a user
