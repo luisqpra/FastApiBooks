@@ -100,10 +100,16 @@ def main():
 if __name__ == "__main__":
     # main()
     conn = connectionDB()
+    feature = "email"
+    data = "lukas24@gmail.com"
+    id_user = 3
     cur = conn.cursor()
-    colums = 'id_user,firts_name,last_name,email,birth_date'
-    cur.execute(f"SELECT {colums} FROM User WHERE id_user=?", (1,))
-    rows = cur.fetchall()[0]
-    list_keys = colums.split(',')
-    results = {list_keys[i]: rows[i] for i in range(len(rows))}
-    print(results)
+    cur.execute(f"SELECT {feature} FROM User WHERE id_user=?", (id_user,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        raise TypeError
+    query = f"UPDATE user SET {feature} = '{data}' WHERE id_user = {id_user}"
+    cur.execute(query)
+    conn.commit()
+    conn.close()
+    print('fin')

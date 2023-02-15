@@ -2,6 +2,7 @@
 from typing import Optional, Dict, List
 from enum import Enum
 from datetime import date
+import re
 
 # Base data
 from database.funtionsDB import connectionDB
@@ -15,13 +16,18 @@ from pydantic import Field
 
 # FastAPI
 from fastapi import FastAPI, status
-from fastapi import Body, Query
-# Body, Path
+from fastapi import Body, Query, Path
 from fastapi import HTTPException
 
 app = FastAPI()
 app.title = "Library"
 app.version = " 0.0.1"
+
+
+# Funtions
+def it_is_email(email):
+    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    return re.match(regex, email) is not None
 
 
 # Modes
@@ -115,11 +121,17 @@ def create_user(user: User = Body(...)):
         birth_date,
         user.password.get_secret_value()
         )
+    if not it_is_email(user.email):
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡It is not valid email!"
+            )
     cur = conn.cursor()
     # detect if email exists in DB
     cur.execute("SELECT * FROM User WHERE email=?", (user.email,))
     rows = cur.fetchall()
     if len(rows) > 0:
+        conn.close()
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="¡This email already exists!"
@@ -175,16 +187,68 @@ def show_user(
 ):
     conn = connectionDB()
     cur = conn.cursor()
-    colums = 'id_user,firts_name,last_name,email,birth_date'
-    cur.execute(f"SELECT {colums} FROM User WHERE id_user=?", (id_user,))
+    features = 'id_user,firts_name,last_name,email,birth_date'
+    cur.execute(f"SELECT {features} FROM User WHERE id_user=?", (id_user,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The user does not exists!"
+            )
+    conn.close()
+    list_keys = features.split(',')
+    row = rows[0]
+    results = {list_keys[i]: row[i] for i in range(len(row))}
+    return results
+
+
+# Update a user
+@app.put(
+    path="/user/update_user/{id_user}/{feature}/{data}",
+    status_code=status.HTTP_200_OK,
+    tags=["User"],
+    summary="Updates a user"
+    )
+def update_user(
+    id_user: int = Path(
+        ...,
+        title="user id",
+        gt=0
+    ),
+    feature: str = Path(
+        ...,
+        title="Feature",
+        description="feature to change"
+    ),
+    data: str = Path(
+        ...,
+        title="data",
+        description="data changing"
+    )
+):
+    if feature == 'email' and not it_is_email(data):
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡It is not valid email!"
+            )
+        
+    conn = connectionDB()
+    cur = conn.cursor()
+    cur.execute(f"SELECT {feature} FROM User WHERE id_user=?", (id_user,))
     rows = cur.fetchall()
     if len(rows) == 0:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="¡The user does not exists!"
             )
+    query = f"UPDATE user SET {feature} = '{data}' WHERE id_user = {id_user}"
+    cur.execute(query)
+    conn.commit()
     conn.close()
-    list_keys = colums.split(',')
-    row = rows[0]
-    results = {list_keys[i]: row[i] for i in range(len(row))}
-    return results
+    result = {
+        'mesmessage': 'Update successful',
+        'id_user': id_user,
+        feature: data
+        }
+    return result
