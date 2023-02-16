@@ -110,7 +110,7 @@ def home() -> Dict:
     path="/User/new",
     status_code=status.HTTP_201_CREATED,
     tags=["User"],
-    summary="Create a new user and return it"
+    summary="Create a new user"
     )
 def create_user(user: User = Body(...)):
     """
@@ -317,3 +317,38 @@ def update_user2(user: UserUpdate = Body(...)):
     conn.commit()
     conn.close()
     return dataUpdate
+
+
+# Delete a user
+@app.delete(
+    path="/user/delete",
+    status_code=status.HTTP_200_OK,
+    summary="Delete a user",
+    tags=["User"]
+)
+def delete_a_user(id_user: int = Query(
+        ...,
+        gt=0,
+        title="User id",
+        description="User id unique"
+        )
+):
+    conn = connectionDB()
+    cur = conn.cursor()
+    features = 'id_user,firts_name,last_name,email,birth_date'
+    cur.execute(f"SELECT {features} FROM User WHERE id_user=?", (id_user,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The user does not exists!"
+            )
+    sql = 'DELETE FROM User WHERE id_user=?'
+    cur.execute(sql, (id_user,))
+    conn.commit()
+    conn.close()
+    list_keys = features.split(',')
+    row = rows[0]
+    results = {list_keys[i]: row[i] for i in range(len(row))}
+    return results
