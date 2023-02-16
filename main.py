@@ -51,19 +51,19 @@ class Language(Enum):
 
 # Modes User
 class UserBase(BaseModel):
-    firts_name: str = Field(
+    firts_name: Optional[str] = Field(
         default=None,
         min_length=1,
         max_length=50
     )
-    last_name: str = Field(
+    last_name: Optional[str] = Field(
         default=None,
         min_length=1,
         max_length=50
     )
     email: EmailStr = Field(
         ...
-        )
+    )
     birth_date: Optional[date] = Field(
         default=None,
         example='1986-04-22'
@@ -75,6 +75,19 @@ class User(UserBase):
         ...,
         min_length=8,
         max_length=64
+    )
+
+
+class UserUpdate(User):
+    email: Optional[EmailStr] = Field(
+    )
+    password: Optional[SecretStr] = Field(
+        min_length=8,
+        max_length=64
+    )
+    id_user: int = Field(
+        ...,
+        gt=0
     )
 
 
@@ -208,7 +221,8 @@ def show_user(
     path="/user/update_user/{id_user}/{feature}/{data}",
     status_code=status.HTTP_200_OK,
     tags=["User"],
-    summary="Updates a user"
+    summary="Updates a user",
+    deprecated=True
     )
 def update_user(
     id_user: int = Path(
@@ -232,12 +246,12 @@ def update_user(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="¡It is not valid email!"
             )
-        
     conn = connectionDB()
     cur = conn.cursor()
     cur.execute(f"SELECT {feature} FROM User WHERE id_user=?", (id_user,))
     rows = cur.fetchall()
     if len(rows) == 0:
+        conn.close()
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="¡The user does not exists!"
@@ -252,3 +266,54 @@ def update_user(
         feature: data
         }
     return result
+
+
+# Update a user
+@app.put(
+    path="/User/update",
+    status_code=status.HTTP_200_OK,
+    tags=["User"],
+    summary="Updates a user"
+    )
+def update_user2(user: UserUpdate = Body(...)):
+    UserUpdate = user.dict()
+    [UserUpdate.pop(b) for b in UserUpdate.copy() if UserUpdate.get(b) is None]
+    if len(UserUpdate) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡It is necessary a feature to change!"
+            )
+    conn = connectionDB()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM User WHERE id_user=?", (user.id_user,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The user does not exists!"
+            )
+    features = 'id_user,firts_name,last_name,email,birth_date,password'
+    list_keys = features.split(',')
+    row = rows[0]
+    dataUpdate = {list_keys[i]: row[i] for i in range(len(row))}
+    dataUpdate.update(UserUpdate)
+    sql = ''' UPDATE User
+              SET firts_name = ? ,
+                  last_name = ? ,
+                  email = ?,
+                  birth_date = ?,
+                  password = ?
+              WHERE id_user = ?'''
+    values = (
+        dataUpdate['firts_name'],
+        dataUpdate['last_name'],
+        dataUpdate['email'],
+        dataUpdate['birth_date'],
+        dataUpdate['password'].get_secret_value(),
+        dataUpdate['id_user']
+    )
+    cur.execute(sql, values)
+    conn.commit()
+    conn.close()
+    return dataUpdate
