@@ -1,7 +1,7 @@
 # Python
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 from enum import Enum
-from datetime import date
+from datetime import date, datetime
 import re
 
 # Base data
@@ -91,8 +91,46 @@ class UserUpdate(User):
     )
 
 
-class UserOut(UserBase):
-    pass
+class BookBase(BaseModel):
+    title: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        example="A Monster Calls"
+    )
+    reading_age: Optional[ReadingAge] = Field(
+        default=ReadingAge.yearsDefault,
+        example=ReadingAge.years18
+    )
+    pages: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=10000,
+        example=128
+    )
+    language: Optional[Language] = Field(
+        default=Language.default,
+        example=Language.english
+    )
+    publisher: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=50,
+        example="Candlewick"
+    )
+    date_add: datetime = Field(default=datetime.now())
+    date_update: Optional[datetime] = Field(default=None)
+
+
+class BookUpdate(BookBase):
+    title: str = Field(
+        min_length=1,
+        max_length=100
+    )
+    id_book: int = Field(
+        ...,
+        gt=0
+    )
 
 
 # Home
@@ -105,9 +143,10 @@ def home() -> Dict:
     return {"Hello": "World"}
 
 
+# User
 # Create a User
 @app.post(
-    path="/User/new",
+    path="/user/new",
     status_code=status.HTTP_201_CREATED,
     tags=["User"],
     summary="Create a new user"
@@ -270,7 +309,7 @@ def update_user(
 
 # Update a user
 @app.put(
-    path="/User/update",
+    path="/user/update",
     status_code=status.HTTP_200_OK,
     tags=["User"],
     summary="Updates a user"
@@ -352,3 +391,15 @@ def delete_a_user(id_user: int = Query(
     row = rows[0]
     results = {list_keys[i]: row[i] for i in range(len(row))}
     return results
+
+
+# Book
+# Create a Book
+@app.post(
+    path="/book/new",
+    status_code=status.HTTP_201_CREATED,
+    tags=["Book"],
+    summary="Create a new user"
+    )
+def create_book(user: User = Body(...)):
+    pass
