@@ -40,6 +40,9 @@ class ReadingAge(Enum):
     years15_17 = "15 - 17 years"
     years18 = "older than 18"
 
+    def __str__(self):
+        return str(self.value)
+
 
 class Language(Enum):
     default = "No defined"
@@ -47,6 +50,9 @@ class Language(Enum):
     spanish = "spanish"
     french = "french "
     german = "german "
+
+    def __str__(self):
+        return str(self.value)
 
 
 # Modes User
@@ -102,8 +108,8 @@ class BookBase(BaseModel):
         default=ReadingAge.yearsDefault,
         example=ReadingAge.years18
     )
-    pages: Optional[int] = Field(
-        default=None,
+    pages: int = Field(
+        ...,
         ge=1,
         le=10000,
         example=128
@@ -118,8 +124,8 @@ class BookBase(BaseModel):
         max_length=50,
         example="Candlewick"
     )
-    date_add: datetime = Field(default=datetime.now())
-    date_update: Optional[datetime] = Field(default=None)
+    date_add: date = Field(default=date.today())
+    date_update: date = Field(default=date.today())
 
 
 class BookUpdate(BookBase):
@@ -154,10 +160,6 @@ def home() -> Dict:
 def create_user(user: User = Body(...)):
     """
     It creates a user
-    - Args:
-      user (User): User = Body(...)
-    - Returns:
-      The user object with the id_user field added.
     """
     conn = connectionDB()
     sql = ''' INSERT INTO User(firts_name, last_name, email, birth_date, password)
@@ -399,7 +401,34 @@ def delete_a_user(id_user: int = Query(
     path="/book/new",
     status_code=status.HTTP_201_CREATED,
     tags=["Book"],
-    summary="Create a new user"
+    summary="Create a new book"
     )
-def create_book(user: User = Body(...)):
-    pass
+def create_book(book: BookBase = Body(...)):
+    """
+    It creates a user
+    """
+    conn = connectionDB()
+    sql = ''' INSERT INTO Book(title,reading_age,pages,language,publisher,date_add,date_update)
+              VALUES(?,?,?,?,?,?,?) '''
+    if book.date_add is not None:
+        date_add = book.date_add.strftime("%Y-%m-%d")
+    else:
+        date_add = datetime.now().strftime("%Y-%m-%d")
+    date_update = date_add
+    data = (
+        book.title,
+        book.reading_age.__str__(),
+        book.pages,
+        book.language.__str__(),
+        book.publisher,
+        date_add,
+        date_update
+        )
+    cur = conn.cursor()
+    cur.execute(sql, data)
+    id_book = cur.lastrowid
+    conn.commit()
+    conn.close()
+    results = book.dict()
+    results.update({'id_book': id_book, 'date_update': date_add})
+    return results

@@ -100,16 +100,19 @@ def main():
 if __name__ == "__main__":
     # main()
     conn = connectionDB()
-    feature = "email"
-    data = "lukas24@gmail.com"
-    id_user = 3
+    sql = ''' INSERT INTO Book(title,reading_age,pages,language,publisher,date_add,date_update)
+              VALUES(?,?,?,?,?,?,?) '''
+    data = (
+        'Conquistas',
+        '15 - 17 years',
+        186,
+        'spanish',
+        'La planta',
+        '2023-02-16',
+        '2023-02-16',
+        )
     cur = conn.cursor()
-    cur.execute(f"SELECT {feature} FROM User WHERE id_user=?", (id_user,))
-    rows = cur.fetchall()
-    if len(rows) == 0:
-        raise TypeError
-    query = f"UPDATE user SET {feature} = '{data}' WHERE id_user = {id_user}"
-    cur.execute(query)
+    cur.execute(sql, data)
     conn.commit()
     conn.close()
     print('fin')
