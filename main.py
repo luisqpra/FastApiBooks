@@ -162,7 +162,8 @@ def create_user(user: User = Body(...)):
     It creates a user
     """
     conn = connectionDB()
-    sql = ''' INSERT INTO User(firts_name, last_name, email, birth_date, password)
+    sql = ''' INSERT INTO User(firts_name, last_name, \
+    email, birth_date, password)
               VALUES(?,?,?,?,?) '''
     if user.birth_date is not None:
         birth_date = user.birth_date.strftime("%Y-%m-%d")
@@ -408,7 +409,8 @@ def create_book(book: BookBase = Body(...)):
     It creates a user
     """
     conn = connectionDB()
-    sql = ''' INSERT INTO Book(title,reading_age,pages,language,publisher,date_add,date_update)
+    sql = ''' INSERT INTO Book(title,reading_age,pages, \
+    language,publisher,date_add,date_update)
               VALUES(?,?,?,?,?,?,?) '''
     if book.date_add is not None:
         date_add = book.date_add.strftime("%Y-%m-%d")
@@ -431,4 +433,64 @@ def create_book(book: BookBase = Body(...)):
     conn.close()
     results = book.dict()
     results.update({'id_book': id_book, 'date_update': date_add})
+    return results
+
+
+# Read Books
+@app.get(
+    path="/books",
+    status_code=status.HTTP_200_OK,
+    summary="Shows all books",
+    tags=["Book"]
+)
+def show_all_books():
+    """
+    Shows all books
+    """
+    conn = connectionDB()
+    cur = conn.cursor()
+    colums = "id_book,title,reading_age,pages,"\
+        "language,publisher,date_add,date_update"
+    cur.execute(f"SELECT {colums} FROM Book")
+    rows = cur.fetchall()
+    conn.close()
+    list_keys = colums.split(',')
+    results = list(
+        map(
+            lambda x: {list_keys[i]: x[i] for i in range(len(x))}, rows)
+        )
+    return results
+
+
+# Read a book
+@app.get(
+    path="/book/details",
+    status_code=status.HTTP_200_OK,
+    tags=["Book"],
+    summary="Show details about a book"
+    )
+def show_book(
+    id_book: int = Query(
+        ...,
+        gt=0,
+        title="Book id",
+        description="Book id unique"
+        )
+):
+    conn = connectionDB()
+    cur = conn.cursor()
+    features = "id_book,title,reading_age,pages,"\
+        "language,publisher,date_add,date_update"
+    cur.execute(f"SELECT {features} FROM Book WHERE id_book=?", (id_book,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The book does not exists!"
+            )
+    conn.close()
+    list_keys = features.split(',')
+    row = rows[0]
+    results = {list_keys[i]: row[i] for i in range(len(row))}
     return results

@@ -39,11 +39,11 @@ def main():
         id_book integer NOT NULL,
         title text,
         reading_age text,
-        pages integer NOT NULL,
+        pages integer,
         language text,
         publisher text,
         date_add text NOT NULL,
-        date_update text NOT NULL,
+        date_update text,
         PRIMARY KEY(id_book),
         UNIQUE(id_book)
         );"""
@@ -100,19 +100,6 @@ def main():
 if __name__ == "__main__":
     # main()
     conn = connectionDB()
-    sql = ''' INSERT INTO Book(title,reading_age,pages,language,publisher,date_add,date_update)
-              VALUES(?,?,?,?,?,?,?) '''
-    data = (
-        'Conquistas',
-        '15 - 17 years',
-        186,
-        'spanish',
-        'La planta',
-        '2023-02-16',
-        '2023-02-16',
-        )
-    cur = conn.cursor()
-    cur.execute(sql, data)
     conn.commit()
     conn.close()
     print('fin')
