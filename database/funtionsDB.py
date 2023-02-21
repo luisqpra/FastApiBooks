@@ -103,3 +103,6 @@ if __name__ == "__main__":
     conn.commit()
     conn.close()
     print('fin')
+    features = "id_book,title,reading_age,pages,\
+language,publisher,date_add,date_update"
+    print(features)

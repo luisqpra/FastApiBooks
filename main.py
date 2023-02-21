@@ -124,14 +124,25 @@ class BookBase(BaseModel):
         max_length=50,
         example="Candlewick"
     )
-    date_add: date = Field(default=date.today())
-    date_update: date = Field(default=date.today())
+    date_add: Optional[date] = Field(default=date.today())
+    date_update: Optional[date] = Field(default=date.today())
 
 
 class BookUpdate(BookBase):
-    title: str = Field(
+    title: Optional[str] = Field(
         min_length=1,
         max_length=100
+    )
+    pages: Optional[int] = Field(
+        ge=1,
+        le=10000,
+        example=128
+    )
+    language: Optional[Language] = Field(
+        default=None
+    )
+    reading_age: Optional[ReadingAge] = Field(
+        default=None
     )
     id_book: int = Field(
         ...,
@@ -318,9 +329,9 @@ def update_user(
     summary="Updates a user"
     )
 def update_user2(user: UserUpdate = Body(...)):
-    UserUpdate = user.dict()
-    [UserUpdate.pop(b) for b in UserUpdate.copy() if UserUpdate.get(b) is None]
-    if len(UserUpdate) < 2:
+    userUpdate = user.dict()
+    [userUpdate.pop(b) for b in userUpdate.copy() if userUpdate.get(b) is None]
+    if len(userUpdate) < 2:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="¡It is necessary a feature to change!"
@@ -339,7 +350,7 @@ def update_user2(user: UserUpdate = Body(...)):
     list_keys = features.split(',')
     row = rows[0]
     dataUpdate = {list_keys[i]: row[i] for i in range(len(row))}
-    dataUpdate.update(UserUpdate)
+    dataUpdate.update(userUpdate)
     sql = ''' UPDATE User
               SET firts_name = ? ,
                   last_name = ? ,
@@ -494,3 +505,59 @@ def show_book(
     row = rows[0]
     results = {list_keys[i]: row[i] for i in range(len(row))}
     return results
+
+
+# Update a user
+@app.put(
+    path="/book/update",
+    status_code=status.HTTP_200_OK,
+    tags=["Book"],
+    summary="Updates a book"
+    )
+def update_book(book: BookUpdate = Body(...)):
+    bookUpdate = book.dict()
+    [bookUpdate.pop(b) for b in bookUpdate.copy() if bookUpdate.get(b) is None]
+    if len(bookUpdate) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡It is necessary a feature to change!"
+            )
+    conn = connectionDB()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM Book WHERE id_book=?", (book.id_book,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The book does not exists!"
+            )
+    features = "id_book,title,reading_age,pages,\
+language,publisher,date_add,date_update"
+    list_keys = features.split(',')
+    row = rows[0]
+    dataUpdate = {list_keys[i]: row[i] for i in range(len(row))}
+    dataUpdate.update(bookUpdate)
+    sql = ''' UPDATE Book
+              SET title = ? ,
+                  reading_age = ? ,
+                  pages = ?,
+                  language = ?,
+                  publisher = ?,
+                  date_add = ?,
+                  date_update = ?
+              WHERE id_book = ?'''
+    values = (
+        dataUpdate['title'],
+        dataUpdate['reading_age'].__str__(),
+        dataUpdate['pages'],
+        dataUpdate['language'].__str__(),
+        dataUpdate['publisher'],
+        dataUpdate['date_add'],
+        dataUpdate['date_update'],
+        dataUpdate['id_book']
+    )
+    cur.execute(sql, values)
+    conn.commit()
+    conn.close()
+    return dataUpdate
