@@ -507,7 +507,7 @@ def show_book(
     return results
 
 
-# Update a user
+# Update a book
 @app.put(
     path="/book/update",
     status_code=status.HTTP_200_OK,
@@ -554,10 +554,45 @@ language,publisher,date_add,date_update"
         dataUpdate['language'].__str__(),
         dataUpdate['publisher'],
         dataUpdate['date_add'],
-        dataUpdate['date_update'],
+        datetime.now().strftime("%Y-%m-%d"),
         dataUpdate['id_book']
     )
     cur.execute(sql, values)
     conn.commit()
     conn.close()
     return dataUpdate
+
+
+# Delete a book
+@app.delete(
+    path="/book/delete",
+    status_code=status.HTTP_200_OK,
+    summary="Delete a book",
+    tags=["Book"]
+)
+def delete_a_book(id_book: int = Query(
+        ...,
+        gt=0,
+        title="Book id",
+        description="Book id unique"
+        )
+):
+    conn = connectionDB()
+    cur = conn.cursor()
+    features = "id_book,title,date_add,date_update"
+    cur.execute(f"SELECT {features} FROM Book WHERE id_book=?", (id_book,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The book does not exists!"
+            )
+    sql = 'DELETE FROM Book WHERE id_book=?'
+    cur.execute(sql, (id_book,))
+    conn.commit()
+    conn.close()
+    list_keys = features.split(',')
+    row = rows[0]
+    results = {list_keys[i]: row[i] for i in range(len(row))}
+    return results
