@@ -97,6 +97,7 @@ class UserUpdate(User):
     )
 
 
+# Modes Book
 class BookBase(BaseModel):
     title: str = Field(
         ...,
@@ -143,6 +144,41 @@ class BookUpdate(BookBase):
     )
     reading_age: Optional[ReadingAge] = Field(
         default=None
+    )
+    id_book: int = Field(
+        ...,
+        gt=0
+    )
+
+
+# Modes Author
+# name,nationality,genre,birthdate
+class AuthorBase(BaseModel):
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=124,
+        example="Bastian Lorens Dad"
+    )
+    nationality:  Optional[str] = Field(
+        min_length=1,
+        max_length=100,
+        example="The UK"
+    )
+    genre: Optional[str] = Field(
+        min_length=1,
+        max_length=100,
+        example="Fantasy"
+    )
+    birthdate: Optional[date] = Field(default=None)
+
+
+class AuthorUpdate(AuthorBase):
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=124,
+        example="Lord Bartholome"
     )
     id_book: int = Field(
         ...,
@@ -595,4 +631,38 @@ def delete_a_book(id_book: int = Query(
     list_keys = features.split(',')
     row = rows[0]
     results = {list_keys[i]: row[i] for i in range(len(row))}
+    return results
+
+
+# Author
+# Create an Author
+@app.post(
+    path="/author/new",
+    status_code=status.HTTP_201_CREATED,
+    tags=["Author"],
+    summary="Create a new author"
+    )
+def create_author(author: AuthorBase = Body(...)):
+    """
+    It creates an author
+    """
+    conn = connectionDB()
+    sql = ''' INSERT INTO Author(name,nationality,genre,birthdate)
+              VALUES(?,?,?,?) '''
+    birthdate = author.birthdate
+    if author.birthdate is not None:
+        birthdate = birthdate.strftime("%Y-%m-%d")
+    data = (
+        author.name,
+        author.nationality,
+        author.genre,
+        birthdate
+        )
+    cur = conn.cursor()
+    cur.execute(sql, data)
+    id_author = cur.lastrowid
+    conn.commit()
+    conn.close()
+    results = author.dict()
+    results.update({'id_author': id_author})
     return results
