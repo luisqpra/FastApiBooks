@@ -1,5 +1,4 @@
-# Aplicación FastAPI con README en Markdown
-
+# Aplicación FastAPI de una simulacion biblioteca de libros
 Activar entorno virtual
 ```bash
 source venv/bin/activate
