@@ -1,6 +1,5 @@
 # Aplicación FastAPI con README en Markdown
 
-<<<<<<< HEAD
 Activar entorno virtual
 ```bash
 source venv/bin/activate
@@ -15,9 +14,6 @@ Ejecutar aplicacion
 ```bash
 uvicorn main:app --reload
 ```
-=======
-Puedes utilizar este contenido en Markdown para el README de tu aplicación FastAPI en GitHub.
->>>>>>> develop
 
 ## Aplicación Python FastAPI
 
