@@ -18,6 +18,7 @@ from pydantic import Field
 from fastapi import FastAPI, status
 from fastapi import Body, Query, Path
 from fastapi import HTTPException
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 app.title = "Library"
@@ -188,12 +189,13 @@ class AuthorUpdate(AuthorBase):
 
 # Home
 @app.get(
-    path="/",
+    path='/',
     status_code=status.HTTP_200_OK,
     tags=["Home"]
     )
 def home() -> Dict:
-    return {"Hello": "World"}
+    return HTMLResponse('<h1> Hello word FastAPI</h1>')
+    # return {"Hello": "World"}
 
 
 # User
