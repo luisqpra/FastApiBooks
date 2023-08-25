@@ -668,3 +668,64 @@ def create_author(author: AuthorBase = Body(...)):
     results = author.dict()
     results.update({'id_author': id_author})
     return results
+
+
+# Read Authors
+@app.get(
+    path="/authors",
+    status_code=status.HTTP_200_OK,
+    summary="Shows all authors",
+    tags=["Author"]
+)
+def show_all_authors():
+    """
+    Shows all authors
+    """
+    conn = connectionDB()
+    cur = conn.cursor()
+    colums = 'id_author,name,nationality,genre,birthdate'
+    cur.execute(f"SELECT {colums} FROM Author")
+    rows = cur.fetchall()
+    conn.close()
+    list_keys = colums.split(',')
+    results = list(
+        map(
+            lambda x: {list_keys[i]: x[i] for i in range(len(x))}, rows)
+        )
+    return results
+
+
+# Read a Author
+@app.get(
+    path="/author/details",
+    status_code=status.HTTP_200_OK,
+    tags=["Author"],
+    summary="Show details about an author"
+    )
+def show_author(
+    id_book: int = Query(
+        ...,
+        gt=0,
+        title="Author id",
+        description="Author id unique"
+        )
+):
+    conn = connectionDB()
+    cur = conn.cursor()
+    features = 'id_author,name,nationality,genre,birthdate'
+    cur.execute(f"SELECT {features} FROM Author WHERE id_author=?", (id_book,))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The author does not exists!"
+            )
+    conn.close()
+    list_keys = features.split(',')
+    row = rows[0]
+    results = {list_keys[i]: row[i] for i in range(len(row))}
+    return results
+
+# Update a Author
+# Delete a Author
