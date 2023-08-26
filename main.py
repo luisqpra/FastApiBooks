@@ -153,7 +153,6 @@ class BookUpdate(BookBase):
 
 
 # Modes Author
-# name,nationality,genre,birthdate
 class AuthorBase(BaseModel):
     name: str = Field(
         ...,
@@ -181,7 +180,7 @@ class AuthorUpdate(AuthorBase):
         max_length=124,
         example="Lord Bartholome"
     )
-    id_book: int = Field(
+    id_author: int = Field(
         ...,
         gt=0
     )
@@ -703,7 +702,7 @@ def show_all_authors():
     summary="Show details about an author"
     )
 def show_author(
-    id_book: int = Query(
+    id_author: int = Query(
         ...,
         gt=0,
         title="Author id",
@@ -713,7 +712,7 @@ def show_author(
     conn = connectionDB()
     cur = conn.cursor()
     features = 'id_author,name,nationality,genre,birthdate'
-    cur.execute(f"SELECT {features} FROM Author WHERE id_author=?", (id_book,))
+    cur.execute(f"SELECT {features} FROM Author WHERE id_author=?", (id_author,))
     rows = cur.fetchall()
     if len(rows) == 0:
         conn.close()
@@ -727,5 +726,56 @@ def show_author(
     results = {list_keys[i]: row[i] for i in range(len(row))}
     return results
 
+
 # Update a Author
+@app.put(
+    path="/author/update",
+    status_code=status.HTTP_200_OK,
+    tags=["Author"],
+    summary="Updates an author"
+    )
+def update_author(author: AuthorUpdate = Body(...)):
+    authorUpdate = author.dict()
+    print(authorUpdate)
+    [authorUpdate.pop(b) for b in authorUpdate.copy() if authorUpdate.get(b) is None]
+    if len(authorUpdate) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡It is necessary a feature to change!"
+            )
+    conn = connectionDB()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM Author WHERE id_author=?",
+                (authorUpdate['id_author'],))
+    rows = cur.fetchall()
+    if len(rows) == 0:
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="¡The author does not exists!"
+            )
+    features = 'id_author,name,nationality,genre,birthdate'
+    list_keys = features.split(',')
+    row = rows[0]
+    dataUpdate = {list_keys[i]: row[i] for i in range(len(row))}
+    dataUpdate.update(authorUpdate)
+    sql = ''' UPDATE Author
+              SET name = ? ,
+                  nationality = ? ,
+                  genre = ?,
+                  birthdate = ?
+              WHERE id_author = ?'''
+    values = (
+        dataUpdate['name'],
+        dataUpdate['nationality'],
+        dataUpdate['genre'],
+        dataUpdate['birthdate'],
+        dataUpdate['id_author']
+    )
+    cur.execute(sql, values)
+    conn.commit()
+    conn.close()
+    return dataUpdate
+
+
 # Delete a Author

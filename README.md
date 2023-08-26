@@ -71,6 +71,8 @@ La API ofrece puntos finales para gestionar usuarios, libros y autores. Aquí ti
 - `PUT /book/update` - Actualizar un libro
 - `DELETE /book/delete` - Eliminar un libro
 - `POST /author/new` - Crear un nuevo autor
+- `GET /authors` - Mostrar todos los autores
+- `GET /author/details` - Mostrar detalles de un autor
 
 ## Contribuciones
 
