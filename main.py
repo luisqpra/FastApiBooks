@@ -1,5 +1,5 @@
 # Python
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from enum import Enum
 from datetime import date, datetime
 import re
@@ -203,9 +203,10 @@ def home() -> Dict:
     path="/user/new",
     status_code=status.HTTP_201_CREATED,
     tags=["User"],
+    response_model=User,
     summary="Create a new user"
     )
-def create_user(user: User = Body(...)):
+def create_user(user: User = Body(...)) -> User:
     """
     It creates a user
     """
@@ -253,9 +254,10 @@ def create_user(user: User = Body(...)):
     path="/users",
     status_code=status.HTTP_200_OK,
     summary="Shows all users",
+    response_model=List[User],
     tags=["User"]
 )
-def show_all_users():
+def show_all_users() -> List[User]:
     """
     Shows all users
     """
@@ -278,6 +280,7 @@ def show_all_users():
     path="/user/details",
     status_code=status.HTTP_200_OK,
     tags=["User"],
+    response_model=User,
     summary="Show details about a user"
     )
 def show_user(
@@ -287,7 +290,7 @@ def show_user(
         title="User id",
         description="User id unique"
         )
-):
+) -> User:
     conn = connectionDB()
     cur = conn.cursor()
     features = 'id_user,firts_name,last_name,email,birth_date'
@@ -306,7 +309,7 @@ def show_user(
     return results
 
 
-# Update a user
+# Update a user (Deprecated)
 @app.put(
     path="/user/update_user/{id_user}/{feature}/{data}",
     status_code=status.HTTP_200_OK,
@@ -363,9 +366,10 @@ def update_user(
     path="/user/update",
     status_code=status.HTTP_200_OK,
     tags=["User"],
+    response_model=User,
     summary="Updates a user"
     )
-def update_user2(user: UserUpdate = Body(...)):
+def update_user2(user: UserUpdate = Body(...)) -> User:
     userUpdate = user.dict()
     [userUpdate.pop(b) for b in userUpdate.copy() if userUpdate.get(b) is None]
     if len(userUpdate) < 2:
@@ -414,6 +418,7 @@ def update_user2(user: UserUpdate = Body(...)):
     path="/user/delete",
     status_code=status.HTTP_200_OK,
     summary="Delete a user",
+    response_model=dict,
     tags=["User"]
 )
 def delete_a_user(id_user: int = Query(
@@ -422,7 +427,7 @@ def delete_a_user(id_user: int = Query(
         title="User id",
         description="User id unique"
         )
-):
+) -> dict:
     conn = connectionDB()
     cur = conn.cursor()
     features = 'id_user,firts_name,last_name,email,birth_date'
@@ -450,9 +455,10 @@ def delete_a_user(id_user: int = Query(
     path="/book/new",
     status_code=status.HTTP_201_CREATED,
     tags=["Book"],
+    response_model=BookBase,
     summary="Create a new book"
     )
-def create_book(book: BookBase = Body(...)):
+def create_book(book: BookBase = Body(...)) -> BookBase:
     """
     It creates a user
     """
@@ -489,9 +495,10 @@ def create_book(book: BookBase = Body(...)):
     path="/books",
     status_code=status.HTTP_200_OK,
     summary="Shows all books",
+    response_model=List[BookBase],
     tags=["Book"]
 )
-def show_all_books():
+def show_all_books() -> List[BookBase]:
     """
     Shows all books
     """
@@ -515,6 +522,7 @@ def show_all_books():
     path="/book/details",
     status_code=status.HTTP_200_OK,
     tags=["Book"],
+    response_model=BookBase,
     summary="Show details about a book"
     )
 def show_book(
@@ -524,7 +532,7 @@ def show_book(
         title="Book id",
         description="Book id unique"
         )
-):
+) -> BookBase:
     conn = connectionDB()
     cur = conn.cursor()
     features = "id_book,title,reading_age,pages,"\
@@ -549,9 +557,10 @@ def show_book(
     path="/book/update",
     status_code=status.HTTP_200_OK,
     tags=["Book"],
+    response_model=BookBase,
     summary="Updates a book"
     )
-def update_book(book: BookUpdate = Body(...)):
+def update_book(book: BookUpdate = Body(...)) -> BookBase:
     bookUpdate = book.dict()
     [bookUpdate.pop(b) for b in bookUpdate.copy() if bookUpdate.get(b) is None]
     if len(bookUpdate) < 2:
@@ -605,6 +614,7 @@ language,publisher,date_add,date_update"
     path="/book/delete",
     status_code=status.HTTP_200_OK,
     summary="Delete a book",
+    response_model=dict,
     tags=["Book"]
 )
 def delete_a_book(id_book: int = Query(
@@ -613,7 +623,7 @@ def delete_a_book(id_book: int = Query(
         title="Book id",
         description="Book id unique"
         )
-):
+) -> dict:
     conn = connectionDB()
     cur = conn.cursor()
     features = "id_book,title,date_add,date_update"
@@ -641,9 +651,10 @@ def delete_a_book(id_book: int = Query(
     path="/author/new",
     status_code=status.HTTP_201_CREATED,
     tags=["Author"],
+    response_model=AuthorBase,
     summary="Create a new author"
     )
-def create_author(author: AuthorBase = Body(...)):
+def create_author(author: AuthorBase = Body(...)) -> AuthorBase:
     """
     It creates an author
     """
@@ -674,9 +685,10 @@ def create_author(author: AuthorBase = Body(...)):
     path="/authors",
     status_code=status.HTTP_200_OK,
     summary="Shows all authors",
+    response_model=List[AuthorBase],
     tags=["Author"]
 )
-def show_all_authors():
+def show_all_authors() -> List[AuthorBase]:
     """
     Shows all authors
     """
@@ -699,6 +711,7 @@ def show_all_authors():
     path="/author/details",
     status_code=status.HTTP_200_OK,
     tags=["Author"],
+    response_model=AuthorBase,
     summary="Show details about an author"
     )
 def show_author(
@@ -708,11 +721,12 @@ def show_author(
         title="Author id",
         description="Author id unique"
         )
-):
+) -> AuthorBase:
     conn = connectionDB()
     cur = conn.cursor()
     features = 'id_author,name,nationality,genre,birthdate'
-    cur.execute(f"SELECT {features} FROM Author WHERE id_author=?", (id_author,))
+    cur.execute(f"SELECT {features} FROM Author WHERE id_author=?",
+                (id_author,))
     rows = cur.fetchall()
     if len(rows) == 0:
         conn.close()
@@ -732,11 +746,11 @@ def show_author(
     path="/author/update",
     status_code=status.HTTP_200_OK,
     tags=["Author"],
+    response_model=AuthorBase,
     summary="Updates an author"
     )
-def update_author(author: AuthorUpdate = Body(...)):
+def update_author(author: AuthorUpdate = Body(...)) -> AuthorBase:
     authorUpdate = author.dict()
-    print(authorUpdate)
     [authorUpdate.pop(b) for b in authorUpdate.copy() if authorUpdate.get(b) is None]
     if len(authorUpdate) < 2:
         raise HTTPException(
