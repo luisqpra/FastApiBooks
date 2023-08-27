@@ -13,16 +13,21 @@ from pydantic import SecretStr
 from pydantic import EmailStr
 from pydantic import Field
 
-
 # FastAPI
 from fastapi import FastAPI, status
 from fastapi import Body, Query, Path
 from fastapi import HTTPException
 from fastapi.responses import HTMLResponse
 
+# Middlewares
+from middlewares.error_handler import ErrorHandler
+
+
 app = FastAPI()
 app.title = "Library"
 app.version = " 0.0.1"
+
+app.add_middleware(ErrorHandler)
 
 
 # Funtions
@@ -31,7 +36,7 @@ def it_is_email(email):
     return re.match(regex, email) is not None
 
 
-# Modes
+# Models
 class ReadingAge(Enum):
     yearsDefault = "No defined"
     years1_3 = "1 - 3 years"
@@ -98,7 +103,7 @@ class UserUpdate(User):
     )
 
 
-# Modes Book
+# Models Book
 class BookBase(BaseModel):
     title: str = Field(
         ...,
@@ -152,7 +157,7 @@ class BookUpdate(BookBase):
     )
 
 
-# Modes Author
+# Models Author
 class AuthorBase(BaseModel):
     name: str = Field(
         ...,
