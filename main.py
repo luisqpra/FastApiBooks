@@ -13,7 +13,7 @@ from pydantic import Field
 from fastapi import FastAPI, status
 from fastapi import Body, Query
 from fastapi import HTTPException
-from fastapi.responses import HTMLResponse
+
 
 # Middlewares
 from middlewares.error_handler import ErrorHandler
@@ -21,12 +21,14 @@ from middlewares.error_handler import ErrorHandler
 # Router
 from routes.user import user_router
 from routes.book import book_router
+from routes.home import home_router
 
 app = FastAPI()
 app.title = "Library"
 app.version = " 0.0.1"
 
 app.add_middleware(ErrorHandler)
+app.include_router(home_router)
 app.include_router(user_router)
 app.include_router(book_router)
 
@@ -63,17 +65,6 @@ class AuthorUpdate(AuthorBase):
         ...,
         gt=0
     )
-
-
-# Home
-@app.get(
-    path='/',
-    status_code=status.HTTP_200_OK,
-    tags=["Home"]
-    )
-def home() -> Dict:
-    return HTMLResponse('<h1> Hello word FastAPI</h1>')
-    # return {"Hello": "World"}
 
 
 # Author
