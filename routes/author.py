@@ -1,13 +1,8 @@
 # Python
-from typing import Optional, List
-from datetime import date
+from typing import List
 
 # Base data
 from database.funtionsDB import connectionDB
-
-# Pydantic
-from pydantic import BaseModel
-from pydantic import Field
 
 # FastAPI
 from fastapi import status
@@ -15,35 +10,10 @@ from fastapi import Body, Query
 from fastapi import HTTPException
 from fastapi import APIRouter
 
+# Model
+from schemas.authors import AuthorBase, AuthorUpdate
+
 author_router = APIRouter()
-
-
-# Models Author
-class AuthorBase(BaseModel):
-    name: str = Field(
-        ...,
-        min_length=1,
-        max_length=124,
-        example="Bastian Lorens Dad"
-    )
-    nationality:  Optional[str] = Field(
-        min_length=1,
-        max_length=100,
-        example="The UK"
-    )
-    genre: Optional[str] = Field(
-        min_length=1,
-        max_length=100,
-        example="Fantasy"
-    )
-    birthdate: Optional[date] = Field(default=None)
-
-
-class AuthorUpdate(AuthorBase):
-    id_author: int = Field(
-        ...,
-        gt=0
-    )
 
 
 # Author
