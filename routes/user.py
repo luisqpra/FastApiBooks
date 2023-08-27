@@ -263,7 +263,6 @@ def update_user2(user: UserUpdate = Body(...)) -> User:
     list_keys = features.split(',')
     row = rows[0]
     dataUpdate = {list_keys[i]: row[i] for i in range(len(row))}
-    print(dataUpdate)
     dataUpdate.update(userUpdate)
     sql = ''' UPDATE User
               SET firts_name = ? ,
