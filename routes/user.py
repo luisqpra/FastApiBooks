@@ -1,7 +1,6 @@
 # Python
 import re
-from typing import Optional, List
-from datetime import date
+from typing import List
 
 # FastAPI
 from fastapi import APIRouter
@@ -12,11 +11,8 @@ from fastapi import HTTPException
 # Base data
 from database.funtionsDB import connectionDB
 
-# Pydantic
-from pydantic import BaseModel
-from pydantic import SecretStr
-from pydantic import EmailStr
-from pydantic import Field
+# Model
+from schemas.user import User, UserUpdate
 
 user_router = APIRouter()
 
@@ -25,48 +21,6 @@ user_router = APIRouter()
 def it_is_email(email):
     regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     return re.match(regex, email) is not None
-
-
-# Modes User
-class UserBase(BaseModel):
-    firts_name: Optional[str] = Field(
-        default=None,
-        min_length=1,
-        max_length=50
-    )
-    last_name: Optional[str] = Field(
-        default=None,
-        min_length=1,
-        max_length=50
-    )
-    email: EmailStr = Field(
-        ...
-    )
-    birth_date: Optional[date] = Field(
-        default=None,
-        example='1986-04-22'
-    )
-
-
-class User(UserBase):
-    password: SecretStr = Field(
-        ...,
-        min_length=8,
-        max_length=64
-    )
-
-
-class UserUpdate(User):
-    email: Optional[EmailStr] = Field(
-    )
-    password: Optional[SecretStr] = Field(
-        min_length=8,
-        max_length=64
-    )
-    id_user: int = Field(
-        ...,
-        gt=0
-    )
 
 
 # User
